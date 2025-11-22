@@ -18,9 +18,9 @@ You're security-conscious. You don't want nosy competitors, script kiddies, or t
 
 Or maybe you just think it's **none of their fucking business** what your tech stack is.
 
-But you've tried Wordpress plugins before that aim to hide your stack, but they all do weird things like changing and redirecting your links, which bugs out media and functions
+You may have already tried Wordpress plugins before that aim to hide your stack, but they all do weird things like changing and redirecting your links, which bugs out media and functions
 
-But you know... to not be seen by someone, you don't necessarily need to hide yourself... you could also just blind them.
+But you know... to not be seen by someone, you don't necessarily need to hide yourself... you could also just **blind them**.
 
 ## The Solution
 
