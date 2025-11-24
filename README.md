@@ -35,10 +35,7 @@ But you know... to not be seen by someone, you don't necessarily need to hide yo
 
 
 ## Smart Detection?!
-Fuckalyzer only begins working if it detects the user running:
-- **Wappalyzer**
-- **BuiltWith**
-- Other technology profilers
+Fuckalyzer only begins working if it detects the user running, **Wappalyzer**, **BuiltWith**, or other technology profilers.
 
 Only *then* does it activate. Your regular visitors see nothing unusual. But snoopers? They get flashbanged.
 
