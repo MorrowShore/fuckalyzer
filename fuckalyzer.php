@@ -43,18 +43,37 @@ class WappalyzerConfuser {
         
         // Frontend injections - detector script loads first
         add_action('wp_head', [$this, 'inject_detector_script'], 0);
-        add_action('wp_head', [$this, 'inject_meta_tags'], 1);
-        add_action('wp_head', [$this, 'inject_fake_links'], 99);
-        add_action('wp_head', [$this, 'inject_css_variables'], 99);
-        add_action('wp_head', [$this, 'inject_html_patterns'], 99);
-        add_action('wp_footer', [$this, 'inject_js_globals'], 99);
-        add_action('wp_footer', [$this, 'inject_dom_elements'], 99);
         
         // Body class filter
         add_filter('body_class', [$this, 'add_body_classes']);
         
         // Set fake cookie
         add_action('init', [$this, 'set_fake_cookies']);
+        
+        // AJAX endpoint for spoofing data
+        add_action('wp_ajax_nopriv_get_wpc_spoof_data', [$this, 'get_spoof_data_callback']);
+        add_action('wp_ajax_get_wpc_spoof_data', [$this, 'get_spoof_data_callback']);
+    }
+    
+    /**
+     * AJAX callback to serve all spoofing HTML content.
+     */
+    public function get_spoof_data_callback() {
+        // We are separating head and body injections to ensure scripts run correctly
+        ob_start();
+        $this->inject_meta_tags();
+        $this->inject_fake_links();
+        $this->inject_css_variables();
+        $this->inject_html_patterns();
+        $head_html = ob_get_clean();
+
+        ob_start();
+        $this->inject_js_globals();
+        $this->inject_dom_elements();
+        $footer_html = ob_get_clean();
+
+        wp_send_json_success(['head' => $head_html, 'footer' => $footer_html]);
+        wp_die();
     }
     
     /**
@@ -148,21 +167,42 @@ async function detectExtensions() {
     });
 }
 
-// Activate spoofing - show hidden elements and run JS spoofs
+// Activate spoofing - fetch and inject spoofing HTML
 window.WPC.activateSpoofing = function() {
     if (window.WPC.spoofingActive) return;
     window.WPC.spoofingActive = true;
     
-    // Show hidden spoof elements
-    var el = document.getElementById('wpc-dom-spoof');
-    if (el) el.style.display = 'block';
+    console.log('[WPC] Technology profiler detected, activating spoofing...');
     
-    // Run deferred JS spoofs
-    if (typeof window.WPC.runJsSpoofs === 'function') {
-        window.WPC.runJsSpoofs();
-    }
-    
-    console.log('[WPC] Technology profiler detected, spoofing activated');
+    fetch('/wp-admin/admin-ajax.php?action=get_wpc_spoof_data')
+        .then(function(response) { return response.json(); })
+        .then(function(json) {
+            if (json.success && json.data) {
+                // Inject head elements
+                if (json.data.head) {
+                    document.head.insertAdjacentHTML('beforeend', json.data.head);
+                }
+                // Inject footer elements
+                if (json.data.footer) {
+                    document.body.insertAdjacentHTML('beforeend', json.data.footer);
+                    // Manually find and execute our inline scripts
+                    var scripts = document.body.querySelectorAll('#wpc-js-spoof');
+                    scripts.forEach(function(script) {
+                         if (script.text) {
+                            try {
+                                new Function(script.text)();
+                            } catch (e) {
+                                console.error('[WPC] Error executing spoof script', e);
+                            }
+                        }
+                    });
+                }
+                 console.log('[WPC] Spoofing activated.');
+            }
+        })
+        .catch(function(error) {
+            console.error('[WPC] Failed to fetch spoofing data:', error);
+        });
 };
 
 // Start detection after DOM ready
