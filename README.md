@@ -4,7 +4,7 @@
 
 ### *The WordPress plugin that fucks over Wappalyzer*
 
-<img width="1003" height="1100" alt="image" src="https://github.com/user-attachments/assets/879e4602-caba-46c1-b912-02850da4c6dd" />
+<img width="966" height="1435" alt="image" src="https://github.com/user-attachments/assets/508d413a-8fd6-49b0-9d6a-7235f02e8b1c" />
 
 
 ![License](https://img.shields.io/badge/license-AGPL-green)
