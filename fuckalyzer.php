@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Fuckalyzer
  * Description: Detects Wappalyzer extension, then confuses it by injecting false technology signatures.
- * Version: 2.0.0
+ * Version: 2.1.0
  * Author: Morrow Shore
  * Author Website: https://morrowshore.com/
  * License: AGPLv3
@@ -215,6 +215,28 @@ setTimeout(detectExtensions, 5000);
         if (!isset($_COOKIE['__cfduid'])) {
             setcookie('__cfduid', 'd' . bin2hex(random_bytes(22)), 0, '/');
         }
+        // Wix
+        if (!isset($_COOKIE['domain'])) {
+            setcookie('domain', '.wix.com', 0, '/');
+        }
+        // Azure
+        if (!isset($_COOKIE['arraffinity'])) {
+            setcookie('arraffinity', 'wpc_fake_arraffinity', 0, '/');
+        }
+        if (!isset($_COOKIE['tipmix'])) {
+            setcookie('tipmix', 'wpc_fake_tipmix', 0, '/');
+        }
+        // Mediavine
+        if (!isset($_COOKIE['mediavine_session'])) {
+            setcookie('mediavine_session', '1', 0, '/');
+        }
+        // Microsoft Advertising
+        if (!isset($_COOKIE['_uetsid'])) {
+            setcookie('_uetsid', 'wpc_fake_uetsid', 0, '/');
+        }
+        if (!isset($_COOKIE['_uetvid'])) {
+            setcookie('_uetvid', 'wpc_fake_uetvid', 0, '/');
+        }
     }
     
     /**
@@ -254,6 +276,67 @@ setTimeout(detectExtensions, 5000);
         
         // Medium
         header('x-powered-by: Medium', false);
+        
+        // Ghost
+        header('x-ghost-cache-status: HIT', false);
+        
+        // Strapi
+        header('x-powered-by: strapi', false);
+        
+        // WP Rocket
+        header('x-powered-by: wp rocket', false);
+        header('x-rocket-nginx-bypass: true', false);
+        
+        // WordPress Super Cache
+        header('wp-super-cache: HIT', false);
+        
+        // Google PageSpeed
+        header('x-mod-pagespeed: 1.14.33.1-0', false);
+        header('x-page-speed: 1.14.33.1-0', false);
+        
+        // Wix
+        header('x-wix-renderer-server: wix', false);
+        header('x-wix-request-id: wpc-fake-id', false);
+        header('x-wix-server-artifact-id: wpc-fake-artifact', false);
+        
+        // Hostinger
+        header('platform: hostinger', false);
+        
+        // Netlify
+        header('server: netlify', false);
+        header('x-nf-request-id: wpc-fake-request-id', false);
+        // PythonAnywhere
+        header('server: pythonanywhere', false);
+        // Railway
+        header('server: railway', false);
+        // Render
+        header('x-render-origin-server: render', false);
+        // SiteGround
+        header('host-header: 6b7412fb82ca5edfd0917e3957f05d89', false);
+        // Vercel
+        header('x-now-trace: fra1', false);
+        // WP Engine
+        header('wpe-backend: apache', false);
+        header('x-pass-why: wpc-fake-reason', false);
+        header('x-powered-by: WP Engine', false);
+        header('x-wpe-loopback-upstream-addr: 127.0.0.1', false);
+        // WordPress VIP
+        header('x-powered-by: WordPress VIP', false);
+        // Amazon Web Services
+        header('x-amz-request-id: WPC_FAKE_REQUEST_ID', false);
+        header('x-amz-id-2: WPCfAkEId2', false);
+        // Azure
+        header('azure-regionname: West US', false);
+        header('azure-sitename: wpc-fake-site', false);
+        header('server: Windows-Azure', false);
+        header('x-ms-request-id: wpc-fake-ms-request', false);
+        // GitHub Pages
+        header('server: GitHub.com', false);
+        header('x-github-request-id: FAKE-ID', false);
+        // Heroku
+        header('via: 1.1 vegur', false);
+        // Linkedin Ads
+        header('content-security-policy: upgrade-insecure-requests; frame-ancestors *; report-uri /csp-report; default-src https:; script-src https: \'unsafe-inline\' \'unsafe-eval\' *.linkedin.com px.ads.linkedin.com; style-src https: \'unsafe-inline\';', false);
     }
     
     /**
@@ -261,6 +344,7 @@ setTimeout(detectExtensions, 5000);
      */
     public function add_body_classes($classes) {
         $classes[] = 'fl-builder'; // Beaver Builder
+        $classes[] = 'astra-'; // Astra
         return $classes;
     }
     
@@ -274,6 +358,11 @@ setTimeout(detectExtensions, 5000);
             'Drupal 10.2.0',
             'WordPress 6.4.2',
             'easy digital downloads v3.2.0',
+            'ghost 5.0.0', // Ghost
+            'wix.com website builder', // Wix
+            'hostinger website builder', // Hostinger Website Builder
+            'ionos mywebsite 8', // MyWebsite
+            'vertex v.1.0.0', // Vertex
         ];
         
         foreach ($generators as $gen) {
@@ -305,7 +394,7 @@ setTimeout(detectExtensions, 5000);
     public function inject_html_patterns() {
         // WordPress patterns
         echo '<link rel="stylesheet" href="' . esc_url(home_url('/wp-content/themes/flavor/style.css')) . '" data-wpc="1">' . "\n";
-        echo '<link rel="stylesheet" href="' . esc_url(home_url('/wp-includes/css/dist/block-library/style.min.css')) . '" data-wpc="1">' . "\n";
+        echo '<link rel="stylesheet" href="' . esc_url(home_url('/wp-content/plugins/elementor/assets/css/frontend.min.css')) . '" data-wpc="1">' . "\n";
         echo '<link href="https://s0.wp.com/wp-content/themes/flavor/style.css" rel="prefetch" data-wpc="1">' . "\n";
         
         // Drupal
@@ -314,6 +403,34 @@ setTimeout(detectExtensions, 5000);
         
         // ASP.NET viewstate (hidden)
         echo '<input type="hidden" name="__VIEWSTATE" value="wpc_fake_viewstate" data-wpc="1">' . "\n";
+        
+        // Twenty Twenty-Five
+        echo '<link rel="stylesheet" href="' . esc_url(home_url('/wp-content/themes/twentytwentyfive/style.css')) . '" data-wpc="1">' . "\n";
+        
+        // Twenty Twenty
+        echo '<link rel="stylesheet" href="' . esc_url(home_url('/wp-content/themes/twentytwenty/style.css')) . '" data-wpc="1">' . "\n";
+        echo '<link id="twentytwenty-style-css" rel="stylesheet" href="' . esc_url(home_url('/wp-content/themes/twentytwenty/style.css')) . '" data-wpc="1">' . "\n";
+        
+        // Twenty Ten
+        echo '<link rel="stylesheet" href="' . esc_url(home_url('/wp-content/themes/twentyten/style.css')) . '" data-wpc="1">' . "\n";
+        
+        // Vertex
+        echo '<link rel="stylesheet" href="' . esc_url(home_url('/wp-content/themes/vertex/style.css')) . '" data-wpc="1">' . "\n";
+        
+        // Astra
+        echo '<link rel="stylesheet" href="' . esc_url(home_url('/wp-content/themes/astra/style.css')) . '" data-wpc="1">' . "\n";
+        
+        // Enigma
+        echo '<link rel="stylesheet" href="' . esc_url(home_url('/wp-content/themes/enigma/style.css')) . '" data-wpc="1">' . "\n";
+        
+        // Kadence WP Kadence
+        echo '<link id="kadence-global-css" rel="stylesheet" href="' . esc_url(home_url('/wp-content/themes/kadence/style.css')) . '" data-wpc="1">' . "\n";
+        
+        // SitePoint
+        echo '<link rel="stylesheet" href="' . esc_url(home_url('/wp-content/themes/sitepoint-base/style.css')) . '" data-wpc="1">' . "\n";
+        // Linkedin Ads & Yahoo Tag Manager
+        echo '<!-- wpc_fake_linkedin_pixel --><img height="1" width="1" style="display:none;" alt="" src="https://px.ads.linkedin.com/collect/?pid=12345&fmt=gif" />' . "\n";
+        echo '<!-- Yahoo! Tag Manager -->' . "\n";
     }
     
     /**
@@ -345,6 +462,71 @@ setTimeout(detectExtensions, 5000);
         
         // OpenCart
         echo '<link rel="prefetch" href="/catalog/view/theme/rgen-opencart/style.css" data-wpc="1">' . "\n";
+        
+        // WP Rocket
+        echo '<link rel="prefetch" href="' . esc_url(home_url('/wp-content/plugins/wp-rocket/style.css')) . '" data-wpc="1">' . "\n";
+        echo '<style id="wpr-usedcss" data-wpc="1">/* WP Rocket CSS */</style>' . "\n";
+        
+        // Twenty Twenty-Five
+        echo '<link rel="prefetch" href="' . esc_url(home_url('/wp-content/themes/twentytwentyfive/')) . '" data-wpc="1">' . "\n";
+        
+        // Twenty Twenty
+        echo '<link rel="prefetch" href="' . esc_url(home_url('/wp-content/themes/twentytwenty/')) . '" data-wpc="1">' . "\n";
+        
+        // Twenty Ten
+        echo '<link rel="prefetch" href="' . esc_url(home_url('/wp-content/themes/twentyten/')) . '" data-wpc="1">' . "\n";
+        
+        // Vertex
+        echo '<link rel="prefetch" href="' . esc_url(home_url('/wp-content/themes/vertex/js/')) . '" data-wpc="1">' . "\n";
+        
+        // Astra
+        echo '<link rel="prefetch" href="' . esc_url(home_url('/wp-content/themes/astra/')) . '" data-wpc="1">' . "\n";
+        
+        // Enigma
+        echo '<link rel="prefetch" href="' . esc_url(home_url('/wp-content/themes/enigma/')) . '" data-wpc="1">' . "\n";
+        
+        // Kadence WP Kadence
+        echo '<link rel="prefetch" href="' . esc_url(home_url('/wp-content/themes/kadence/js/navigation.min.js')) . '" data-wpc="1">' . "\n";
+        
+        // SitePoint
+        echo '<link rel="prefetch" href="' . esc_url(home_url('/wp-content/themes/sitepoint-base/js/vendors.min.js')) . '" data-wpc="1">' . "\n";
+        echo '<script id="sitepoint-base-vendors-js" src="' . esc_url(home_url('/wp-content/themes/sitepoint-base/js/vendors.min.js')) . '" data-wpc="1"></script>' . "\n";
+        
+        // MangaReader
+        echo '<link rel="prefetch" href="' . esc_url(home_url('/mangareader.themesia.js')) . '" data-wpc="1">' . "\n";
+        
+        // Payload CMS
+        echo '<link rel="prefetch" href="' . esc_url(home_url('/payloadcms.js')) . '" data-wpc="1">' . "\n";
+        echo '<link rel="prefetch" href="' . esc_url(home_url('/payload-theme.js')) . '" data-wpc="1">' . "\n";
+        
+        // Wix
+        echo '<link rel="prefetch" href="https://static.parastorage.com/services/website-scrolling-effect/1.660.0/js/website-scrolling-effect.js" data-wpc="1">' . "\n";
+        
+        // Hostinger Website Builder
+        echo '<link rel="prefetch" href="https://userapp.zyrosite.com/script.js" data-wpc="1">' . "\n";
+        
+        // MyWebsite Creator
+        echo '<link rel="prefetch" href="https://mywebsite-editor.com/script.js" data-wpc="1">' . "\n";
+        echo '<link rel="prefetch" href="https://website-editor.net/script.js" data-wpc="1">' . "\n";
+        
+        // Netlify Create
+        echo '<link rel="prefetch" href="https://app.stackbit.com/script.js" data-wpc="1">' . "\n";
+        // Railway
+        echo '<link rel="prefetch" href="https://railway.app/tracker.js" data-wpc="1">' . "\n";
+        // Magnite
+        echo '<link rel="prefetch" href="https://js.spotx.tv/wrapper/v1/spotx.js" data-wpc="1">' . "\n";
+        // Mediavine
+        echo '<link rel="prefetch" href="https://amp.mediavine.com/wrapper.js" data-wpc="1">' . "\n";
+        // Microsoft Advertising
+        echo '<link rel="prefetch" href="https://bat.bing.com/bat.js" data-wpc="1">' . "\n";
+        // Reddit Ads
+        echo '<link rel="prefetch" href="https://www.redditstatic.com/ads/pixel.js" data-wpc="1">' . "\n";
+        // Twitter Ads
+        echo '<link rel="prefetch" href="https://static.ads-twitter.com/uwt.js" data-wpc="1">' . "\n";
+        // Yahoo! Tag Manager
+        echo '<link rel="prefetch" href="https://b.yjtag.jp/iframe?id=WPC-FAKE" data-wpc="1">' . "\n";
+        // Facebook Pixel
+        echo '<link rel="prefetch" href="https://connect.facebook.net/en_US/fbevents.js" data-wpc="1">' . "\n";
     }
     
     /**
@@ -366,6 +548,11 @@ setTimeout(detectExtensions, 5000);
 }
 /* Vue.js notification */
 .vue-notification-group { display: none !important; }
+/* Kadence WP Kadence */
+.kadence-theme { display: none !important; }
+/* Netlify Create */
+[data-sb-object-id] { display: none !important; }
+[data-sb-field-path] { display: none !important; }
 </style>' . "\n";
     }
     
@@ -489,6 +676,107 @@ window.WPC.runJsSpoofs = function() {
     // === MEDIUM ===
     // Detected via headers
 
+    // === GHOST ===
+    window.ghost = {};
+
+    // === STRAPI ===
+    window.strapi = {};
+
+    // === PAYLOAD CMS ===
+    window.payload = {};
+
+    // === KADENCE WP KADENCE ===
+    window.kadence = {};
+    window.kadenceConfig = {};
+
+    // === MANGAREADER ===
+    window.mangareader = {};
+
+    // === SITEPOINT ===
+    window.sitepoint = {};
+
+    // === TWENTY TWENTY ===
+    window.twentytwenty = {};
+
+    // === VERTEX ===
+    window.vertex = {};
+
+    // === WP ROCKET ===
+    window.RocketLazyLoadScripts = {};
+    window.RocketPreloadLinksConfig = {};
+    window.rocket_lazy = {};
+
+    // === ASTRA ===
+    window.astra = {};
+
+    // === WORDPRESS SUPER CACHE ===
+    window.wp_super_cache = {};
+
+    // === GOOGLE PAGESPEED ===
+    window.pagespeed = {};
+
+    // === WIX ===
+    window.wixBiSession = {};
+    window.wixPerformanceMeasurements = {};
+
+    // === HOSTINGER WEBSITE BUILDER ===
+    window.hostinger = {};
+
+    // === MYWEBSITE ===
+    window.SystemID = "1AND1-FAKE-ID";
+
+    // === MYWEBSITE CREATOR ===
+    window.duda = {};
+
+    // === NETLIFY CREATE ===
+    window.__NEXT_DATA__ = window.__NEXT_DATA__ || {};
+    window.__NEXT_DATA__.props = window.__NEXT_DATA__.props || {};
+    window.__NEXT_DATA__.props.pageProps = window.__NEXT_DATA__.props.pageProps || {};
+    window.__NEXT_DATA__.props.pageProps.withStackbit = true;
+
+    // === NETLIFY ===
+    window.netlify = {};
+    // === OVHcloud ===
+    window.ovh = {};
+    // === PythonAnywhere ===
+    window.pythonAnywhere = {};
+    // === Railway ===
+    window.railway = {};
+    // === Render ===
+    window.render = {};
+    // === SiteGround ===
+    window.siteground = {};
+    // === Vultr ===
+    window.vultr = {};
+    // === WP Engine ===
+    window.wpengine = {};
+    // === WordPress VIP ===
+    window.wpvip = {};
+    // === Yandex.Cloud ===
+    window.yandexCloud = {};
+    // === Amazon Web Services ===
+    window.aws = {};
+    // === Azure ===
+    window.azure = {};
+    // === GitHub Pages ===
+    window.githubPages = {};
+    // === Heroku ===
+    window.heroku = {};
+    // === DATABASES ===
+    window.PostgreSQL = {};
+    window.SQLite = {};
+    window.AmazonAurora = {};
+    window.MariaDB = {};
+    window.MongoDB = {};
+    window.Redis = {};
+    // === ADS & TAGS ===
+    window.linkedinAds = {};
+    window.SpotX = { VERSION: "1.2.3" };
+    window.$mediavine = { web: {} };
+    window.UET = {}; window.uetq = [];
+    window.twttr = {};
+    window.MatomoTagManager = {};
+    window._fbq = function() {};
     // === Add _reactRootContainer to body > div ===
     try {
         var firstDiv = document.body ? document.body.querySelector('div') : null;
@@ -576,6 +864,119 @@ if (window.WPC && window.WPC.detected) {
     <!-- Cloudflare -->
     <img src="//cdn.cloudflare.com/static/wpc.gif" alt="" width="1" height="1" loading="lazy" style="display:none">
     
+    <!-- Ghost -->
+    <div data-ghost="true"></div>
+    
+    <!-- Strapi -->
+    <div data-strapi="true"></div>
+    
+    <!-- Payload CMS -->
+    <div data-payloadcms="true"></div>
+    <div data-payload-theme="true"></div>
+    
+    <!-- Kadence WP Kadence -->
+    <link id="kadence-global-css" rel="stylesheet" href="#" data-wpc="1">
+    <script id="kadence-script" data-wpc="1"></script>
+    
+    <!-- MangaReader -->
+    <div data-mangareader="true"></div>
+    
+    <!-- SitePoint -->
+    <script id="sitepoint-base-vendors-js" data-wpc="1"></script>
+    
+    <!-- Twenty Twenty-Five -->
+    <link rel="stylesheet" href="/wp-content/themes/twentytwentyfive/style.css" data-wpc="1">
+    
+    <!-- Twenty Twenty -->
+    <link id="twentytwenty-style-css" rel="stylesheet" href="#" data-wpc="1">
+    <script id="twentytwenty-script" data-wpc="1"></script>
+    
+    <!-- Twenty Ten -->
+    <link rel="stylesheet" href="/wp-content/themes/twentyten/style.css" data-wpc="1">
+    
+    <!-- Vertex -->
+    <meta name="generator" content="vertex v.1.0.0" data-wpc="1">
+    
+    <!-- WP Rocket -->
+    <style id="wpr-usedcss" data-wpc="1"></style>
+    <script id="wpr-script" data-wpc="1"></script>
+    
+    <!-- Astra -->
+    <link rel="stylesheet" href="/wp-content/themes/astra/style.css" data-wpc="1">
+    <style id="astra-theme-css" data-wpc="1"></style>
+    <script id="astra-script" data-wpc="1"></script>
+    
+    <!-- Enigma -->
+    <link rel="stylesheet" href="/wp-content/themes/enigma/style.css" data-wpc="1">
+    
+    <!-- WordPress Super Cache -->
+    <div id="wp-super-cache" data-wpc="1"></div>
+    
+    <!-- Google PageSpeed -->
+    <div id="pagespeed" data-wpc="1"></div>
+    
+    <!-- Wix -->
+    <div data-wix="true" data-wpc="1"></div>
+    <script id="wix-script" data-wpc="1"></script>
+    
+    <!-- Hostinger Website Builder -->
+    <div data-hostinger="true" data-wpc="1"></div>
+    <script id="hostinger-script" data-wpc="1"></script>
+    
+    <!-- MyWebsite -->
+    <div data-mywebsite="true" data-wpc="1"></div>
+    
+    <!-- MyWebsite Creator -->
+    <div data-duda="true" data-wpc="1"></div>
+    <script id="duda-script" data-wpc="1"></script>
+    
+    <!-- Netlify Create -->
+    <div data-sb-object-id="fake-id" data-wpc="1"></div>
+    <header data-sb-field-path="fake-path" data-wpc="1"></header>
+    <script id="__NEXT_DATA__" data-wpc="1">{"props":{"pageProps":{"withStackbit":true}}}</script>
+    
+    <!-- Netlify -->
+    <div data-netlify="true" data-wpc="1"></div>
+    <script id="netlify-script" data-wpc="1"></script>
+    <!-- OVHcloud -->
+    <div data-ovh="true"></div>
+    <!-- PythonAnywhere -->
+    <div data-pythonanywhere="true"></div>
+    <!-- Railway -->
+    <div data-railway="true"></div>
+    <!-- Render -->
+    <div data-render="true"></div>
+    <!-- SiteGround -->
+    <div data-siteground="true"></div>
+    <!-- Vultr -->
+    <div data-vultr="true"></div>
+    <!-- WP Engine -->
+    <div data-wpengine="true"></div>
+    <!-- WordPress VIP -->
+    <div data-wpvip="true"></div>
+    <!-- Yandex.Cloud -->
+    <div data-yandex="true"></div>
+    <!-- AWS -->
+    <div data-aws="true"></div>
+    <!-- Azure -->
+    <div data-azure="true"></div>
+    <!-- GitHub Pages -->
+    <div data-githubpages="true"></div>
+    <!-- Heroku -->
+    <div data-heroku="true"></div>
+    <!-- Databases -->
+    <div data-postgresql="true"></div>
+    <div data-sqlite="true"></div>
+    <div data-aurora="true"></div>
+    <div data-mariadb="true"></div>
+    <div data-mongodb="true"></div>
+    <div data-redis="true"></div>
+    <!-- Ads & Tags -->
+    <img src="https://dc.ads.linkedin.com/pixel" style="display:none" alt="" data-wpc="1">
+    <link href="https://px.ads.linkedin.com" rel="dns-prefetch" data-wpc="1">
+    <link href="https://js.spotxchange.com" rel="dns-prefetch" data-wpc="1">
+    <link href="https://bing.com" rel="dns-prefetch" data-wpc="1">
+    <img src="https://facebook.com/tr?id=12345&ev=PageView&noscript=1" style="display:none" alt="" data-wpc="1" />
 </div>
 
 <!-- Fake script sources via prefetch -->
@@ -597,6 +998,27 @@ if (window.WPC && window.WPC.detected) {
 <link rel="prefetch" href="https://www.paypalobjects.com/api/checkout.min.js" as="script" data-wpc="1">
 <link rel="prefetch" href="https://app.ecwid.com/script.js" as="script" data-wpc="1">
 <link rel="prefetch" href="https://medium.com/_/js/main.js" as="script" data-wpc="1">
+
+<!-- Additional script sources for new technologies -->
+<link rel="prefetch" href="<?php echo esc_url(home_url('/ghost.js')); ?>" as="script" data-wpc="1">
+<link rel="prefetch" href="<?php echo esc_url(home_url('/strapi.js')); ?>" as="script" data-wpc="1">
+<link rel="prefetch" href="<?php echo esc_url(home_url('/payloadcms.js')); ?>" as="script" data-wpc="1">
+<link rel="prefetch" href="<?php echo esc_url(home_url('/payload-theme.js')); ?>" as="script" data-wpc="1">
+<link rel="prefetch" href="<?php echo esc_url(home_url('/wp-content/themes/kadence/js/navigation.min.js')); ?>" as="script" data-wpc="1">
+<link rel="prefetch" href="<?php echo esc_url(home_url('/mangareader.themesia.js')); ?>" as="script" data-wpc="1">
+<link rel="prefetch" href="<?php echo esc_url(home_url('/wp-content/themes/sitepoint-base/js/vendors.min.js')); ?>" as="script" data-wpc="1">
+<link rel="prefetch" href="<?php echo esc_url(home_url('/wp-content/themes/twentytwentyfive/script.js')); ?>" as="script" data-wpc="1">
+<link rel="prefetch" href="<?php echo esc_url(home_url('/wp-content/themes/twentytwenty/script.js')); ?>" as="script" data-wpc="1">
+<link rel="prefetch" href="<?php echo esc_url(home_url('/wp-content/themes/twentyten/script.js')); ?>" as="script" data-wpc="1">
+<link rel="prefetch" href="<?php echo esc_url(home_url('/wp-content/themes/vertex/js/script.js')); ?>" as="script" data-wpc="1">
+<link rel="prefetch" href="<?php echo esc_url(home_url('/wp-content/plugins/wp-rocket/script.js')); ?>" as="script" data-wpc="1">
+<link rel="prefetch" href="<?php echo esc_url(home_url('/wp-content/themes/astra/script.js')); ?>" as="script" data-wpc="1">
+<link rel="prefetch" href="<?php echo esc_url(home_url('/wp-content/themes/enigma/script.js')); ?>" as="script" data-wpc="1">
+<link rel="prefetch" href="https://static.parastorage.com/services/website-scrolling-effect/1.660.0/js/website-scrolling-effect.js" as="script" data-wpc="1">
+<link rel="prefetch" href="https://userapp.zyrosite.com/script.js" as="script" data-wpc="1">
+<link rel="prefetch" href="https://mywebsite-editor.com/script.js" as="script" data-wpc="1">
+<link rel="prefetch" href="https://website-editor.net/script.js" as="script" data-wpc="1">
+<link rel="prefetch" href="https://app.stackbit.com/script.js" as="script" data-wpc="1">
         <?php
     }
 }
@@ -617,8 +1039,16 @@ add_action('admin_notices', function() {
             'Builder.io', 'Otter Blocks', 'shadcn/ui', 'Radix UI', 'Tailwind CSS',
             'Node.js', 'Webpack', 'MySQL', 'Lovable', 'PayPal', 'Payoneer', 
             'Square', 'Ecwid', 'OpenCart', 'Cloudflare', 'Medium', 'Zend',
-            'EasyDigitalDownloads'
+            'EasyDigitalDownloads', 'Ghost', 'Strapi', 'Payload CMS', 'Kadence WP Kadence',
+            'MangaReader', 'SitePoint', 'Twenty Twenty-Five', 'Twenty Twenty', 'Twenty Ten',
+            'Vertex', 'WP Rocket', 'Astra', 'Enigma', 'WordPress Super Cache', 'Google PageSpeed',
+            'Wix', 'Hostinger Website Builder', 'Hostinger', 'MyWebsite', 'MyWebsite Creator',
+            'Netlify Create', 'Netlify', 'OVHcloud', 'PythonAnywhere', 'Railway', 'Render', 'SiteGround',
+            'Vultr', 'WP Engine', 'WordPress VIP', 'Yandex.Cloud', 'Amazon Web Services', 'Amazon Aurora',
+            'Azure', 'GitHub Pages', 'Heroku', 'PostgreSQL', 'SQLite', 'MariaDB', 'MongoDB', 'Redis',
+            'Linkedin Ads', 'Magnite', 'Mediavine', 'Microsoft Advertising', 'Reddit Ads',
+            'Twitter Ads', 'Yahoo! Tag Manager', 'Matomo Tag Manager', 'Facebook Pixel'
         ];
-        echo '<div class="notice notice-info"><p><strong>Fuckalyzer  v2.0</strong> - Detects profilers then spoofs ' . count($techs) . ' technologies: ' . implode(', ', $techs) . '</p></div>';
+        echo '<div class="notice notice-info"><p><strong>Fuckalyzer v2.1</strong> - Detects profilers then spoofs ' . count($techs) . ' technologies: ' . implode(', ', $techs) . '</p></div>';
     }
 });
