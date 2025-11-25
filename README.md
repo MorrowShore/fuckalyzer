@@ -1,6 +1,7 @@
+# NOW OPTIMIZED!
 
+# <img width="38" height="38" alt="image" src="https://github.com/user-attachments/assets/a32e0fe6-0e54-4f30-8d8b-dbd082359f60" /> Fuckalyzer 🖕 
 
-# Fuckalyzer 🖕 
 
 ### *The WordPress plugin that fucks over Wappalyzer*
 
