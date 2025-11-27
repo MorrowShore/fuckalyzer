@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Fuckalyzer
  * Description: Detects Wappalyzer extension, then confuses it by injecting false technology signatures.
- * Version: 2.1.0
+ * Version: 2.2.0
  * Author: Morrow Shore
  * Author Website: https://morrowshore.com/
  * License: AGPLv3
@@ -1066,29 +1066,3 @@ if (window.WPC && window.WPC.detected) {
 // Initialize
 add_action('plugins_loaded', ['WappalyzerConfuser', 'init']);
 
-// Admin notice
-add_action('admin_notices', function() {
-    if (!current_user_can('manage_options')) return;
-    $screen = get_current_screen();
-    if ($screen && $screen->id === 'plugins') {
-        $techs = [
-            'Elementor', 'Divi', 'Drupal', 'WordPress', 'React', 'Next.js', 
-            'Nuxt.js', 'Vue.js', 'Angular', 'Vercel', 'Firebase', 'Flutter', 'Dart',
-            'jQuery', 'PHP', 'Python', 'Ruby', 'Ruby on Rails', 'Laravel', 'Symfony',
-            'Express', 'ASP.NET', 'Java', 'Gravity Forms', 'Beaver Builder', 
-            'Builder.io', 'Otter Blocks', 'shadcn/ui', 'Radix UI', 'Tailwind CSS',
-            'Node.js', 'Webpack', 'MySQL', 'Lovable', 'PayPal', 'Payoneer', 
-            'Square', 'Ecwid', 'OpenCart', 'Cloudflare', 'Medium', 'Zend',
-            'EasyDigitalDownloads', 'Ghost', 'Strapi', 'Payload CMS', 'Kadence WP Kadence',
-            'MangaReader', 'SitePoint', 'Twenty Twenty-Five', 'Twenty Twenty', 'Twenty Ten',
-            'Vertex', 'WP Rocket', 'Astra', 'Enigma', 'WordPress Super Cache', 'Google PageSpeed',
-            'Wix', 'Hostinger Website Builder', 'Hostinger', 'MyWebsite', 'MyWebsite Creator',
-            'Netlify Create', 'Netlify', 'OVHcloud', 'PythonAnywhere', 'Railway', 'Render', 'SiteGround',
-            'Vultr', 'WP Engine', 'WordPress VIP', 'Yandex.Cloud', 'Amazon Web Services', 'Amazon Aurora',
-            'Azure', 'GitHub Pages', 'Heroku', 'PostgreSQL', 'SQLite', 'MariaDB', 'MongoDB', 'Redis',
-            'Linkedin Ads', 'Magnite', 'Mediavine', 'Microsoft Advertising', 'Reddit Ads',
-            'Twitter Ads', 'Yahoo! Tag Manager', 'Matomo Tag Manager', 'Facebook Pixel'
-        ];
-        echo '<div class="notice notice-info"><p><strong>Fuckalyzer v2.1</strong> - Detects profilers then spoofs ' . count($techs) . ' technologies: ' . implode(', ', $techs) . '</p></div>';
-    }
-});
