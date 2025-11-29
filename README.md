@@ -78,20 +78,6 @@ Listens for the `postMessage` events these extensions use.
 - **CSS variables**: shadcn/ui, Tailwind signatures
 - **Link prefetches**: Fake script sources that match regex patterns
 
-## What Gets Detected:
-
-When Fuckalyzer is active, profilers will report your site is running:
-```
-WordPress, Drupal, React, Vue.js, Angular, Next.js, Nuxt.js, 
-Flutter, Dart, jQuery, PHP, Python, Ruby, Ruby on Rails, 
-Laravel, Symfony, Express, ASP.NET, Java, Node.js, Firebase, 
-Cloudflare, Vercel, Elementor, Divi, Beaver Builder, 
-Gravity Forms, WooCommerce, PayPal, Square, Ecwid, OpenCart,
-Medium, shadcn/ui, Tailwind CSS, Radix UI, Builder.io,
-Otter Blocks, Lovable, EasyDigitalDownloads, and more...
-```
-
-
 
 ## Credits:
 
@@ -100,7 +86,6 @@ Detection fingerprints based on wappalyzer itself at:
 
 
 ---
-
 <p align="center">
   Made with 🖕 for privacy enthusiasts and chaos agents everywhere
 </p>
