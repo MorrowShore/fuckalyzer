@@ -26,7 +26,7 @@ defined('ABSPATH') || exit;
  *
  * @since 2.2.0
  */
-class WappalyzerConfuser {
+class Fuckalyzer_Confuser {
 
 	/**
 	 * The single instance of the class.
@@ -61,9 +61,9 @@ class WappalyzerConfuser {
 	 * Get the singleton instance of the class.
 	 *
 	 * @since  2.2.0
-	 * @return WappalyzerConfuser
+	 * @return Fuckalyzer_Confuser
 	 */
-	public static function init() {
+	public static function init_fuckalyzer() {
 		if ( self::$instance === null ) {
 			self::$instance = new self();
 		}
@@ -77,13 +77,13 @@ class WappalyzerConfuser {
 	 * @since 2.2.0
 	 */
 	private function __construct() {
-		add_action( 'plugins_loaded', [ $this, 'load_textdomain' ] );
-		add_action( 'send_headers', [ $this, 'inject_headers' ] );
-		add_action( 'wp_head', [ $this, 'inject_detector_script' ], 0 );
-		add_filter( 'body_class', [ $this, 'add_body_classes' ] );
-		add_action( 'init', [ $this, 'set_fake_cookies' ] );
-		add_action( 'wp_ajax_nopriv_get_wpc_spoof_data', [ $this, 'get_spoof_data_callback' ] );
-		add_action( 'wp_ajax_get_wpc_spoof_data', [ $this, 'get_spoof_data_callback' ] );
+		add_action( 'plugins_loaded', [ $this, 'load_textdomain_fuckalyzer' ] );
+		add_action( 'send_headers', [ $this, 'inject_headers_fuckalyzer' ] );
+		add_action( 'wp_head', [ $this, 'inject_detector_script_fuckalyzer' ], 0 );
+		add_filter( 'body_class', [ $this, 'add_body_classes_fuckalyzer' ] );
+		add_action( 'init', [ $this, 'set_fake_cookies_fuckalyzer' ] );
+		add_action( 'wp_ajax_nopriv_get_wpc_spoof_data', [ $this, 'get_spoof_data_callback_fuckalyzer' ] );
+		add_action( 'wp_ajax_get_wpc_spoof_data', [ $this, 'get_spoof_data_callback_fuckalyzer' ] );
 	}
 
 	/**
@@ -92,7 +92,7 @@ class WappalyzerConfuser {
 	 * @since 2.2.0
 	 * @return void
 	 */
-	public function load_textdomain() {
+	public function load_textdomain_fuckalyzer() {
 		load_plugin_textdomain( 'fuckalyzer', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 	}
 
@@ -103,19 +103,19 @@ class WappalyzerConfuser {
 	 * @since 2.2.0
 	 * @return void
 	 */
-	public function get_spoof_data_callback() {
+	public function get_spoof_data_callback_fuckalyzer() {
 		check_ajax_referer( 'wpc_ajax_nonce', 'security' );
 
 		ob_start();
-		$this->inject_meta_tags();
-		$this->inject_fake_links();
-		$this->inject_css_variables();
-		$this->inject_html_patterns();
+		$this->inject_meta_tags_fuckalyzer();
+		$this->inject_fake_links_fuckalyzer();
+		$this->inject_css_variables_fuckalyzer();
+		$this->inject_html_patterns_fuckalyzer();
 		$head_html = ob_get_clean();
 
 		ob_start();
-		$this->inject_js_globals();
-		$this->inject_dom_elements();
+		$this->inject_js_globals_fuckalyzer();
+		$this->inject_dom_elements_fuckalyzer();
 		$footer_html = ob_get_clean();
 
 		wp_send_json_success( [ 'head' => $head_html, 'footer' => $footer_html ] );
@@ -129,7 +129,7 @@ class WappalyzerConfuser {
 	 * @since 2.2.0
 	 * @return void
 	 */
-	public function inject_detector_script() {
+	public function inject_detector_script_fuckalyzer() {
 		$extensions_json = wp_json_encode( self::$extensions );
 		$nonce           = wp_create_nonce( 'wpc_ajax_nonce' );
 		?>
@@ -138,37 +138,15 @@ class WappalyzerConfuser {
 "use strict";
 window.WPC = window.WPC || {};
 window.WPC.detected = false;
-window.WPC.extensions = <?php echo $extensions_json; ?>;
 
-// Detection method 1: Try to fetch web_accessible_resources
-function detectViaFetch(extId, file) {
-	return new Promise(function(resolve) {
-		var url = 'chrome-extension://' + extId + '/' + file;
-		var img = new Image();
-		img.onload = function() { resolve(true); };
-		img.onerror = function() {
-			// For JS files, try fetch
-			if ( file.endsWith('.js') ) {
-				fetch(url, {method:'HEAD',mode:'no-cors'})
-					.then(function() { resolve(true); })
-					.catch(function() { resolve(false); });
-			} else {
-				resolve(false);
-			}
-		};
-		img.src = url;
-		setTimeout(function() { resolve(false); }, 500);
-	});
-}
-
-// Detection method 2: Check for Wappalyzer's injected script tag
-function detectViaDOM() {
+// Detection method 1: Check for Wappalyzer's injected script tag
+function detectViaDOM_fuckalyzer() {
 	var scripts = document.querySelectorAll('script[src*="wappalyzer"], script[id="wappalyzer"]');
 	return scripts.length > 0;
 }
 
-// Detection method 3: Check for Wappalyzer message events
-function detectViaMessages() {
+// Detection method 2: Check for Wappalyzer message events
+function detectViaMessages_fuckalyzer() {
 	return new Promise(function(resolve) {
 		var detected = false;
 		var handler = function(e) {
@@ -187,35 +165,21 @@ function detectViaMessages() {
 	});
 }
 
-// Run all detection methods
-async function detectExtensions() {
-	// Check DOM first (fastest)
-	if ( detectViaDOM() ) {
-		window.WPC.detected = true;
-		window.WPC.activateSpoofing();
-		return;
-	}
-
-	// Try to detect via resource probing
-	for (var name in window.WPC.extensions) {
-		var ext = window.WPC.extensions[name];
-		try {
-			var found = await detectViaFetch(ext.id, ext.file);
-			if ( found ) {
-				window.WPC.detected = true;
-				window.WPC.detectedExtension = name;
-				window.WPC.activateSpoofing();
-				return;
-			}
-		} catch(e) {}
-	}
-
-	// Listen for message-based detection
-	detectViaMessages().then(function(found) {
-		if ( found ) {
-			window.WPC.activateSpoofing();
-		}
-	});
+// Combined passive detection strategy
+function startPassiveDetection_fuckalyzer() {
+    // Check DOM first (synchronous)
+    if (detectViaDOM_fuckalyzer()) {
+        window.WPC.detected = true;
+        window.WPC.activateSpoofing();
+        return;
+    }
+    // Then, check for messages (asynchronous)
+    detectViaMessages_fuckalyzer().then(function(found) {
+        if (found) {
+            window.WPC.detected = true;
+            window.WPC.activateSpoofing();
+        }
+    });
 }
 
 // Activate spoofing - fetch and inject spoofing HTML
@@ -257,15 +221,11 @@ window.WPC.activateSpoofing = function() {
 };
 
 // Start detection after DOM ready
-if ( document.readyState === 'loading' ) {
-	document.addEventListener('DOMContentLoaded', detectExtensions);
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startPassiveDetection_fuckalyzer);
 } else {
-	detectExtensions();
+    startPassiveDetection_fuckalyzer();
 }
-
-// Also check periodically for late-loading extensions
-setTimeout(detectExtensions, 2000);
-setTimeout(detectExtensions, 5000);
 
 })();
 </script>
@@ -278,7 +238,7 @@ setTimeout(detectExtensions, 5000);
 	 * @since 2.2.0
 	 * @return void
 	 */
-	public function set_fake_cookies() {
+	public function set_fake_cookies_fuckalyzer() {
 		if ( headers_sent() ) {
 			return;
 		}
@@ -321,7 +281,7 @@ setTimeout(detectExtensions, 5000);
 	 * @since 2.2.0
 	 * @return void
 	 */
-	public function inject_headers() {
+	public function inject_headers_fuckalyzer() {
 		if ( headers_sent() ) {
 			return;
 		}
@@ -362,7 +322,7 @@ setTimeout(detectExtensions, 5000);
 			'x-ms-request-id'                  => 'wpc-fake-ms-request',
 			'x-github-request-id'              => 'FAKE-ID',
 			'via'                              => '1.1 vegur',
-			'content-security-policy'          => 'upgrade-insecure-requests; frame-ancestors *; report-uri /csp-report; default-src https:; script-src https: \'unsafe-inline\' \'unsafe-eval\' *.linkedin.com px.ads.linkedin.com; style-src https: \'unsafe-inline\';',
+			'content-security-policy'          => 'upgrade-insecure-requests; frame-ancestors *; report-uri /csp-report; default-src https:; script-src https: \'unsafe-inline\' \'unsafe-eval\' *.linkedin.com px.ads.linkedin.com; style-src https: \'unsafe-inline\'; img-src https: data:; font-src https: data:;',
 		];
 
 		foreach ( $headers as $name => $value ) {
@@ -377,7 +337,7 @@ setTimeout(detectExtensions, 5000);
 	 * @param  array $classes An array of body classes.
 	 * @return array The modified array of body classes.
 	 */
-	public function add_body_classes( $classes ) {
+	public function add_body_classes_fuckalyzer( $classes ) {
 		$classes[] = 'fl-builder'; // Beaver Builder
 		$classes[] = 'astra-';     // Astra
 		return $classes;
@@ -389,7 +349,7 @@ setTimeout(detectExtensions, 5000);
 	 * @since 2.2.0
 	 * @return void
 	 */
-	public function inject_meta_tags() {
+	public function inject_meta_tags_fuckalyzer() {
 		$generators = [
 			'elementor 3.18.0',
 			'divi v.4.24.0',
@@ -421,7 +381,7 @@ setTimeout(detectExtensions, 5000);
 	 * @since 2.2.0
 	 * @return void
 	 */
-	public function inject_html_patterns() {
+	public function inject_html_patterns_fuckalyzer() {
 		$links = [
 			'/wp-content/themes/flavor/style.css',
 			'/wp-content/plugins/elementor/assets/css/frontend.min.css',
@@ -439,10 +399,11 @@ setTimeout(detectExtensions, 5000);
 		];
 
 		foreach ( $links as $link ) {
-			echo '<link rel="stylesheet" href="' . esc_url( home_url( $link ) ) . '" data-wpc="1">' . "\n";
+			$url = ( strpos( $link, 'http' ) === 0 ) ? $link : home_url( $link );
+			echo '<link rel="prefetch" href="' . esc_url( $url ) . '" data-wpc="1">' . "\n";
 		}
 
-		echo '<link id="twentytwenty-style-css" rel="stylesheet" href="' . esc_url( home_url( '/wp-content/themes/twentytwenty/style.css' ) ) . '" data-wpc="1">' . "\n";
+		echo '<link id="twentytwenty-style-css" rel="prefetch" href="' . esc_url( home_url( '/wp-content/themes/twentytwenty/style.css' ) ) . '" data-wpc="1">' . "\n";
 		echo '<input type="hidden" name="__VIEWSTATE" value="wpc_fake_viewstate" data-wpc="1">' . "\n";
 		echo '<!-- wpc_fake_linkedin_pixel --><img height="1" width="1" style="display:none;" alt="" src="https://px.ads.linkedin.com/collect/?pid=12345&fmt=gif" />' . "\n";
 		echo '<!-- Yahoo! Tag Manager -->' . "\n";
@@ -454,7 +415,7 @@ setTimeout(detectExtensions, 5000);
 	 * @since 2.2.0
 	 * @return void
 	 */
-	public function inject_fake_links() {
+	public function inject_fake_links_fuckalyzer() {
 		$prefetch_links = [
 			'/wp-content/plugins/elementor/assets/css/frontend.min.css',
 			'/wp-content/plugins/elementor-pro/assets/css/frontend.min.css',
@@ -491,7 +452,8 @@ setTimeout(detectExtensions, 5000);
 		];
 
 		foreach ( $prefetch_links as $link ) {
-			echo '<link rel="prefetch" href="' . esc_url( home_url( $link ) ) . '" data-wpc="1">' . "\n";
+			$url = ( strpos( $link, 'http' ) === 0 ) ? $link : home_url( $link );
+			echo '<link rel="prefetch" href="' . esc_url( $url ) . '" data-wpc="1">' . "\n";
 		}
 
 		echo '<link id="fl-builder-layout" rel="prefetch" href="#" data-wpc="1">' . "\n";
@@ -507,7 +469,7 @@ setTimeout(detectExtensions, 5000);
 	 * @since 2.2.0
 	 * @return void
 	 */
-	public function inject_css_variables() {
+	public function inject_css_variables_fuckalyzer() {
 		echo '<style id="wpc-css-spoof" data-wpc="1">
 :root {
 /* shadcn/ui */
@@ -537,7 +499,7 @@ setTimeout(detectExtensions, 5000);
 	 * @since 2.2.0
 	 * @return void
 	 */
-	public function inject_js_globals() {
+	public function inject_js_globals_fuckalyzer() {
 		?>
 <script id="wpc-js-spoof" data-wpc="1">
 window.WPC = window.WPC || {};
@@ -674,7 +636,7 @@ if ( window.WPC && window.WPC.detected ) {
 	 * @since 2.2.0
 	 * @return void
 	 */
-	public function inject_dom_elements() {
+	public function inject_dom_elements_fuckalyzer() {
 		?>
 <!-- WPC: Hidden detection triggers - activated when profiler detected -->
 <div id="wpc-dom-spoof" style="display:none!important;visibility:hidden!important;position:absolute!important;left:-9999px!important;width:0!important;height:0!important;overflow:hidden!important" aria-hidden="true" data-wpc="1">
@@ -793,4 +755,4 @@ if ( window.WPC && window.WPC.detected ) {
 }
 
 // Initialize the plugin.
-add_action( 'plugins_loaded', [ 'WappalyzerConfuser', 'init' ] );
+add_action( 'plugins_loaded', [ 'Fuckalyzer_Confuser', 'init_fuckalyzer' ] );
