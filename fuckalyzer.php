@@ -150,7 +150,7 @@ function detectViaMessages_fuckalyzer() {
 	return new Promise(function(resolve) {
 		var detected = false;
 		var handler = function(e) {
-			if ( e.data && (e.data.id === 'patterns' || e.data.wappalyzer) ) {
+			if ( e.data && e.data.wappalyzer ) {
 				detected = true;
 				window.WPC.detected = true;
 				window.removeEventListener('message', handler);
@@ -322,7 +322,6 @@ if (document.readyState === 'loading') {
 			'x-ms-request-id'                  => 'wpc-fake-ms-request',
 			'x-github-request-id'              => 'FAKE-ID',
 			'via'                              => '1.1 vegur',
-			'content-security-policy'          => 'upgrade-insecure-requests; frame-ancestors *; report-uri /csp-report; default-src https:; script-src https: \'unsafe-inline\' \'unsafe-eval\' *.linkedin.com px.ads.linkedin.com; style-src https: \'unsafe-inline\'; img-src https: data:; font-src https: data:;',
 		];
 
 		foreach ( $headers as $name => $value ) {
