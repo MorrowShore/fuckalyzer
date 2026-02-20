@@ -3,7 +3,7 @@
  * Plugin Name:       Fuckalyzer
  * Plugin URI:        https://morrowshore.com/
  * Description:       Detects Wappalyzer extension, then confuses it by injecting false technology signatures.
- * Version:           2.2.0
+ * Version:           2.3.0
  * Requires at least: 5.2
  * Requires PHP:      7.2
  * Author:            Morrow Shore
@@ -27,6 +27,22 @@ defined('ABSPATH') || exit;
  * @since 2.2.0
  */
 class Fuckalyzer_Confuser {
+
+	/**
+	 * Cookie name used to mark a browser where a profiler was detected.
+	 *
+	 * @since 2.3.0
+	 * @var string
+	 */
+	private const DETECTION_COOKIE_NAME = 'wpc_profiler_detected';
+
+	/**
+	 * Detection cookie lifetime in seconds.
+	 *
+	 * @since 2.3.0
+	 * @var int
+	 */
+	private const DETECTION_COOKIE_TTL = 1800;
 
 	/**
 	 * The single instance of the class.
@@ -77,7 +93,7 @@ class Fuckalyzer_Confuser {
 	 * @since 2.2.0
 	 */
 	private function __construct() {
-		add_action( 'plugins_loaded', [ $this, 'load_textdomain_fuckalyzer' ] );
+		add_action( 'init', [ $this, 'load_textdomain_fuckalyzer' ] );
 		add_action( 'send_headers', [ $this, 'inject_headers_fuckalyzer' ] );
 		add_action( 'wp_head', [ $this, 'inject_detector_script_fuckalyzer' ], 0 );
 		add_filter( 'body_class', [ $this, 'add_body_classes_fuckalyzer' ] );
@@ -105,6 +121,7 @@ class Fuckalyzer_Confuser {
 	 */
 	public function get_spoof_data_callback_fuckalyzer() {
 		check_ajax_referer( 'wpc_ajax_nonce', 'security' );
+		$this->mark_detected_browser_fuckalyzer();
 
 		ob_start();
 		$this->inject_meta_tags_fuckalyzer();
@@ -114,7 +131,6 @@ class Fuckalyzer_Confuser {
 		$head_html = ob_get_clean();
 
 		ob_start();
-		$this->inject_js_globals_fuckalyzer();
 		$this->inject_dom_elements_fuckalyzer();
 		$footer_html = ob_get_clean();
 
@@ -130,14 +146,31 @@ class Fuckalyzer_Confuser {
 	 * @return void
 	 */
 	public function inject_detector_script_fuckalyzer() {
-		$extensions_json = wp_json_encode( self::$extensions );
-		$nonce           = wp_create_nonce( 'wpc_ajax_nonce' );
+		if ( ! $this->should_run_for_frontend_fuckalyzer() ) {
+			return;
+		}
+
+		$nonce            = wp_create_nonce( 'wpc_ajax_nonce' );
+		$ajax_url         = admin_url( 'admin-ajax.php' );
+		$detection_cookie = self::DETECTION_COOKIE_NAME;
 		?>
 <script id="wpc-detector" data-wpc="1">
 (function(){
 "use strict";
 window.WPC = window.WPC || {};
 window.WPC.detected = false;
+window.WPC.spoofingActive = false;
+
+var wpcAjaxUrl = <?php echo wp_json_encode( esc_url_raw( $ajax_url ) ); ?>;
+var wpcNonce = <?php echo wp_json_encode( $nonce ); ?>;
+var wpcDetectionCookie = <?php echo wp_json_encode( $detection_cookie ); ?>;
+var wpcDetectionCookieMaxAge = <?php echo (int) self::DETECTION_COOKIE_TTL; ?>;
+
+function markDetectedBrowser_fuckalyzer() {
+	try {
+		document.cookie = wpcDetectionCookie + "=1; path=/; max-age=" + wpcDetectionCookieMaxAge + "; samesite=lax";
+	} catch (e) {}
+}
 
 // Detection method 1: Check for Wappalyzer's injected script tag
 function detectViaDOM_fuckalyzer() {
@@ -150,7 +183,7 @@ function detectViaMessages_fuckalyzer() {
 	return new Promise(function(resolve) {
 		var detected = false;
 		var handler = function(e) {
-			if ( e.data && e.data.wappalyzer ) {
+			if ( e && e.data && typeof e.data === 'object' && ( e.data.wappalyzer || e.data.source === 'wappalyzer' ) ) {
 				detected = true;
 				window.WPC.detected = true;
 				window.removeEventListener('message', handler);
@@ -167,50 +200,42 @@ function detectViaMessages_fuckalyzer() {
 
 // Combined passive detection strategy
 function startPassiveDetection_fuckalyzer() {
-    // Check DOM first (synchronous)
-    if (detectViaDOM_fuckalyzer()) {
-        window.WPC.detected = true;
-        window.WPC.activateSpoofing();
-        return;
-    }
-    // Then, check for messages (asynchronous)
-    detectViaMessages_fuckalyzer().then(function(found) {
-        if (found) {
-            window.WPC.detected = true;
-            window.WPC.activateSpoofing();
-        }
-    });
+	if ( detectViaDOM_fuckalyzer() ) {
+		window.WPC.detected = true;
+		window.WPC.activateSpoofing();
+		return;
+	}
+
+	detectViaMessages_fuckalyzer().then(function(found) {
+		if ( found ) {
+			window.WPC.detected = true;
+			window.WPC.activateSpoofing();
+		}
+	});
 }
 
 // Activate spoofing - fetch and inject spoofing HTML
 window.WPC.activateSpoofing = function() {
-	if ( window.WPC.spoofingActive ) return;
+	if ( window.WPC.spoofingActive ) {
+		return;
+	}
+
 	window.WPC.spoofingActive = true;
+	markDetectedBrowser_fuckalyzer();
 
 	console.log('[WPC] Technology profiler detected, activating spoofing...');
 
-	fetch('/wp-admin/admin-ajax.php?action=get_wpc_spoof_data&security=<?php echo $nonce; ?>')
+	fetch(wpcAjaxUrl + '?action=get_wpc_spoof_data&security=' + encodeURIComponent(wpcNonce), { credentials: 'same-origin' })
 		.then(function(response) { return response.json(); })
 		.then(function(json) {
 			if ( json.success && json.data ) {
 				// Inject head elements
-				if ( json.data.head ) {
+				if ( json.data.head && document.head ) {
 					document.head.insertAdjacentHTML('beforeend', json.data.head);
 				}
 				// Inject footer elements
-				if ( json.data.footer ) {
+				if ( json.data.footer && document.body ) {
 					document.body.insertAdjacentHTML('beforeend', json.data.footer);
-					// Manually find and execute our inline scripts
-					var scripts = document.body.querySelectorAll('#wpc-js-spoof');
-					scripts.forEach(function(script) {
-						 if ( script.text ) {
-							try {
-								new Function(script.text)();
-							} catch (e) {
-								console.error('[WPC] Error executing spoof script', e);
-							}
-						}
-					});
 				}
 				 console.log('[WPC] Spoofing activated.');
 			}
@@ -220,11 +245,11 @@ window.WPC.activateSpoofing = function() {
 		});
 };
 
-// Start detection after DOM ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startPassiveDetection_fuckalyzer);
+// Start detection after DOM ready.
+if ( document.readyState === 'loading' ) {
+	document.addEventListener('DOMContentLoaded', startPassiveDetection_fuckalyzer);
 } else {
-    startPassiveDetection_fuckalyzer();
+	startPassiveDetection_fuckalyzer();
 }
 
 })();
@@ -239,38 +264,24 @@ if (document.readyState === 'loading') {
 	 * @return void
 	 */
 	public function set_fake_cookies_fuckalyzer() {
-		if ( headers_sent() ) {
+		if ( ! $this->should_emit_server_side_spoofs_fuckalyzer() || headers_sent() ) {
 			return;
 		}
 
-		$cookie_defaults = [
-			'expires'  => 0,
-			'path'     => '/',
-			'domain'   => '',
-			'secure'   => is_ssl(),
-			'httponly' => true,
-			'samesite' => 'Lax',
-		];
-
 		$cookies_to_set = [
-			'laravel_session'   => 'wpc_' . bin2hex( random_bytes( 20 ) ),
+			'laravel_session'     => 'wpc_' . $this->random_hex_fuckalyzer( 20 ),
 			'sf_redirect'       => '{}',
-			'JSESSIONID'        => 'WPC' . strtoupper( bin2hex( random_bytes( 16 ) ) ),
-			'ASP.NET_SessionId' => 'wpc' . bin2hex( random_bytes( 12 ) ),
-			'OCSESSID'          => bin2hex( random_bytes( 16 ) ),
-			'ZendServerSessionId' => bin2hex( random_bytes( 16 ) ),
-			'__cfduid'          => 'd' . bin2hex( random_bytes( 22 ) ),
-			'domain'            => '.wix.com',
-			'arraffinity'       => 'wpc_fake_arraffinity',
-			'tipmix'            => 'wpc_fake_tipmix',
-			'mediavine_session' => '1',
-			'_uetsid'           => 'wpc_fake_uetsid',
-			'_uetvid'           => 'wpc_fake_uetvid',
+			'JSESSIONID'          => 'WPC' . strtoupper( $this->random_hex_fuckalyzer( 16 ) ),
+			'ASP.NET_SessionId'   => 'wpc' . $this->random_hex_fuckalyzer( 12 ),
+			'OCSESSID'            => $this->random_hex_fuckalyzer( 16 ),
+			'ZendServerSessionId' => $this->random_hex_fuckalyzer( 16 ),
+			'arraffinity'         => 'wpc_fake_arraffinity',
+			'tipmix'              => 'wpc_fake_tipmix',
 		];
 
 		foreach ( $cookies_to_set as $name => $value ) {
 			if ( ! isset( $_COOKIE[ $name ] ) ) {
-				setcookie( $name, $value, $cookie_defaults );
+				$this->set_cookie_compat_fuckalyzer( $name, $value );
 			}
 		}
 	}
@@ -282,46 +293,26 @@ if (document.readyState === 'loading') {
 	 * @return void
 	 */
 	public function inject_headers_fuckalyzer() {
-		if ( headers_sent() ) {
+		if ( ! $this->should_emit_server_side_spoofs_fuckalyzer() || headers_sent() ) {
 			return;
 		}
 
 		$headers = [
-			'x-vercel-cache'                   => 'HIT',
-			'x-vercel-id'                      => 'fra1::wpc-' . substr( md5( (string) time() ), 0, 8 ),
-			'x-powered-by'                     => 'PHP/8.3.0, next.js 14.1.0, Express, strapi, wp rocket, WP Engine, WordPress VIP, Medium',
-			'x-drupal-cache'                   => 'HIT',
-			'x-generator'                      => 'Drupal 10.2.0',
-			'expires'                          => 'Sun, 19 Nov 1978 05:00:00 GMT',
-			'link'                             => '<' . home_url( '/wp-json/' ) . '>; rel="https://api.w.org/"',
-			'x-pingback'                       => home_url( '/xmlrpc.php' ),
-			'x-aspnet-version'                 => '4.0.30319',
-			'server'                           => 'Python/3.12.0 gunicorn/21.0.0, Phusion Passenger/6.0.0 Ruby/3.2.0, netlify, pythonanywhere, railway, Windows-Azure, GitHub.com',
-			'cf-cache-status'                  => 'HIT',
-			'cf-ray'                           => substr( md5( microtime() ), 0, 16 ) . '-FRA',
-			'x-ghost-cache-status'             => 'HIT',
-			'x-rocket-nginx-bypass'            => 'true',
-			'wp-super-cache'                   => 'HIT',
-			'x-mod-pagespeed'                  => '1.14.33.1-0',
-			'x-page-speed'                     => '1.14.33.1-0',
-			'x-wix-renderer-server'            => 'wix',
-			'x-wix-request-id'                 => 'wpc-fake-id',
-			'x-wix-server-artifact-id'         => 'wpc-fake-artifact',
-			'platform'                         => 'hostinger',
-			'x-nf-request-id'                  => 'wpc-fake-request-id',
-			'x-render-origin-server'           => 'render',
-			'host-header'                      => '6b7412fb82ca5edfd0917e3957f05d89',
-			'x-now-trace'                      => 'fra1',
-			'wpe-backend'                      => 'apache',
-			'x-pass-why'                       => 'wpc-fake-reason',
-			'x-wpe-loopback-upstream-addr'     => '127.0.0.1',
-			'x-amz-request-id'                 => 'WPC_FAKE_REQUEST_ID',
-			'x-amz-id-2'                       => 'WPCfAkEId2',
-			'azure-regionname'                 => 'West US',
-			'azure-sitename'                   => 'wpc-fake-site',
-			'x-ms-request-id'                  => 'wpc-fake-ms-request',
-			'x-github-request-id'              => 'FAKE-ID',
-			'via'                              => '1.1 vegur',
+			'x-vercel-cache'       => 'HIT',
+			'x-vercel-id'          => 'fra1::wpc-' . substr( md5( (string) time() ), 0, 8 ),
+			'x-powered-by'         => 'PHP/8.3.0, next.js 14.1.0, Express, WordPress',
+			'x-drupal-cache'       => 'HIT',
+			'x-generator'          => 'Drupal 10.2.0',
+			'x-aspnet-version'     => '4.0.30319',
+			'cf-cache-status'      => 'HIT',
+			'cf-ray'               => substr( md5( microtime() ), 0, 16 ) . '-FRA',
+			'x-ghost-cache-status' => 'HIT',
+			'x-mod-pagespeed'      => '1.14.33.1-0',
+			'x-page-speed'         => '1.14.33.1-0',
+			'x-nf-request-id'      => 'wpc-fake-request-id',
+			'x-render-origin-server' => 'render',
+			'x-amz-request-id'     => 'WPC_FAKE_REQUEST_ID',
+			'x-ms-request-id'      => 'wpc-fake-ms-request',
 		];
 
 		foreach ( $headers as $name => $value ) {
@@ -337,8 +328,12 @@ if (document.readyState === 'loading') {
 	 * @return array The modified array of body classes.
 	 */
 	public function add_body_classes_fuckalyzer( $classes ) {
+		if ( ! $this->should_emit_server_side_spoofs_fuckalyzer() ) {
+			return $classes;
+		}
+
 		$classes[] = 'fl-builder'; // Beaver Builder
-		$classes[] = 'astra-';     // Astra
+		$classes[] = 'astra';      // Astra
 		return $classes;
 	}
 
@@ -403,7 +398,7 @@ if (document.readyState === 'loading') {
 		}
 
 		echo '<link id="twentytwenty-style-css" rel="prefetch" href="' . esc_url( home_url( '/wp-content/themes/twentytwenty/style.css' ) ) . '" data-wpc="1">' . "\n";
-		echo '<input type="hidden" name="__VIEWSTATE" value="wpc_fake_viewstate" data-wpc="1">' . "\n";
+		echo '<meta name="wpc-viewstate" content="wpc_fake_viewstate" data-wpc="1">' . "\n";
 		echo '<!-- wpc_fake_linkedin_pixel --><img height="1" width="1" style="display:none;" alt="" src="https://px.ads.linkedin.com/collect/?pid=12345&fmt=gif" />' . "\n";
 		echo '<!-- Yahoo! Tag Manager -->' . "\n";
 	}
@@ -459,7 +454,7 @@ if (document.readyState === 'loading') {
 		echo '<style id="divi-style-parent-inline-inline-css" data-wpc="1">/* Version: 4.24.0 */</style>' . "\n";
 		echo '<link id="payoneer-plugn-css" rel="prefetch" href="#" data-wpc="1">' . "\n";
 		echo '<style id="wpr-usedcss" data-wpc="1">/* WP Rocket CSS */</style>' . "\n";
-		echo '<script id="sitepoint-base-vendors-js" src="' . esc_url( home_url( '/wp-content/themes/sitepoint-base/js/vendors.min.js' ) ) . '" data-wpc="1"></script>' . "\n";
+		echo '<link id="sitepoint-base-vendors-js" rel="prefetch" as="script" href="' . esc_url( home_url( '/wp-content/themes/sitepoint-base/js/vendors.min.js' ) ) . '" data-wpc="1">' . "\n";
 	}
 
 	/**
@@ -748,7 +743,120 @@ if ( window.WPC && window.WPC.detected ) {
 			'https://app.stackbit.com/script.js',
 		];
 		foreach ( $script_links as $link ) {
-			echo '<link rel="prefetch" href="' . esc_url( home_url( $link ) ) . '" as="script" data-wpc="1">' . "\n";
+			$url = ( strpos( $link, 'http' ) === 0 ) ? $link : home_url( $link );
+			echo '<link rel="prefetch" href="' . esc_url( $url ) . '" as="script" data-wpc="1">' . "\n";
+		}
+	}
+
+	/**
+	 * Determine whether this request is a frontend HTML request.
+	 *
+	 * @since 2.3.0
+	 * @return bool
+	 */
+	private function should_run_for_frontend_fuckalyzer() {
+		if ( is_admin() || wp_doing_ajax() ) {
+			return false;
+		}
+
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+			return false;
+		}
+
+		if ( function_exists( 'wp_is_json_request' ) && wp_is_json_request() ) {
+			return false;
+		}
+
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : 'GET';
+		if ( ! in_array( $method, [ 'GET', 'HEAD' ], true ) ) {
+			return false;
+		}
+
+		$accept = isset( $_SERVER['HTTP_ACCEPT'] ) ? strtolower( sanitize_text_field( wp_unslash( $_SERVER['HTTP_ACCEPT'] ) ) ) : '';
+		if ( '' !== $accept && false === strpos( $accept, 'text/html' ) && false === strpos( $accept, '*/*' ) ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Determine whether server-side spoofing should be emitted.
+	 *
+	 * @since 2.3.0
+	 * @return bool
+	 */
+	private function should_emit_server_side_spoofs_fuckalyzer() {
+		return $this->should_run_for_frontend_fuckalyzer() && $this->is_detected_browser_fuckalyzer();
+	}
+
+	/**
+	 * Check if detection cookie is present.
+	 *
+	 * @since 2.3.0
+	 * @return bool
+	 */
+	private function is_detected_browser_fuckalyzer() {
+		return ! empty( $_COOKIE[ self::DETECTION_COOKIE_NAME ] );
+	}
+
+	/**
+	 * Mark a browser as detected so spoofing can happen safely on subsequent frontend requests.
+	 *
+	 * @since 2.3.0
+	 * @return void
+	 */
+	private function mark_detected_browser_fuckalyzer() {
+		if ( headers_sent() ) {
+			return;
+		}
+
+		$this->set_cookie_compat_fuckalyzer( self::DETECTION_COOKIE_NAME, '1', time() + self::DETECTION_COOKIE_TTL, false );
+		$_COOKIE[ self::DETECTION_COOKIE_NAME ] = '1';
+	}
+
+	/**
+	 * Cross-version cookie helper.
+	 *
+	 * @since 2.3.0
+	 * @param string $name     Cookie name.
+	 * @param string $value    Cookie value.
+	 * @param int    $expires  Expiration unix timestamp.
+	 * @param bool   $http_only Whether cookie is HTTP only.
+	 * @return void
+	 */
+	private function set_cookie_compat_fuckalyzer( $name, $value, $expires = 0, $http_only = true ) {
+		if ( PHP_VERSION_ID >= 70300 ) {
+			setcookie(
+				$name,
+				$value,
+				[
+					'expires'  => (int) $expires,
+					'path'     => '/',
+					'domain'   => '',
+					'secure'   => is_ssl(),
+					'httponly' => (bool) $http_only,
+					'samesite' => 'Lax',
+				]
+			);
+			return;
+		}
+
+		setcookie( $name, $value, (int) $expires, '/; samesite=Lax', '', is_ssl(), (bool) $http_only );
+	}
+
+	/**
+	 * Generate a random hex string with a safe fallback.
+	 *
+	 * @since 2.3.0
+	 * @param int $bytes Number of bytes.
+	 * @return string
+	 */
+	private function random_hex_fuckalyzer( $bytes ) {
+		try {
+			return bin2hex( random_bytes( $bytes ) );
+		} catch ( Exception $exception ) {
+			return wp_generate_password( $bytes * 2, false, false );
 		}
 	}
 }
