@@ -49,9 +49,10 @@ Only *then* does it activate. Your regular visitors see nothing unusual. But sno
 ## How to install:
 
 1. Download `fuckalyzer.php`
-2. Drop it in `/wp-content/plugins/`
-3. Activate in WordPress admin
-4. There is no step 4. You're done. Go grab a coffee.
+2. Go to `/wp-content/plugins/`
+3. Make a new folder called `fuckalyzer`
+4. Drop the files in there
+5. Activate in WordPress admin
 
 ## Detection Methods:
 
